@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard IoT Pro</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Socket.IO -->
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 10px;
+      color: #38bdf8;
+    }
+
+    h2 {
+      margin-top: 10px;
+    }
+
+    .cards {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 30px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 15px;
+      width: 200px;
+      transition: 0.3s;
+    }
+
+    .value {
+      font-size: 2em;
+      margin-top: 10px;
+    }
+
+    .alert {
+      background: red !important;
+    }
+
+    canvas {
+      max-width: 700px;
+      margin: auto;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding: 10px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1> Examen de IoT Masters 1 Intelligence Artificielle</h1>
+<h2>📊 Dashboard IoT PRO</h2>
+
+<div class="cards">
+  <div id="tempCard" class="card">
+    <h3>🌡️ Température</h3>
+    <div id="temp" class="value">-- °C</div>
+  </div>
+
+  <div class="card">
+    <h3>💧 Humidité</h3>
+    <div id="hum" class="value">-- %</div>
+  </div>
+</div>
+
+<canvas id="chart"></canvas>
+
+<script>
+  // 🔥 CONNEXION SOCKET CORRIGÉE
+  const socket = io("http://192.168.0.100:5000");
+
+  socket.on('connect', () => {
+    console.log("Connecté au serveur Socket.IO");
+  });
+
+  const tempEl = document.getElementById("temp");
+  const humEl = document.getElementById("hum");
+  const tempCard = document.getElementById("tempCard");
+
+  const labels = [];
+  const tempData = [];
+  const humData = [];
+
+  const ctx = document.getElementById('chart').getContext('2d');
+
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Température (°C)',
+          data: tempData,
+          borderColor: 'red'
+        },
+        {
+          label: 'Humidité (%)',
+          data: humData,
+          borderColor: 'blue'
+        }
+      ]
+    },
+    options: {
+      responsive: true
+    }
+  });
+
+  // 🔥 RÉCEPTION DES DONNÉES
+  socket.on('sensor_data', function(data) {
+    console.log("DATA REÇUE:", data);
+
+    const temp = data.temperature;
+    const hum = data.humidity;
+
+    tempEl.innerHTML = temp + " °C";
+    humEl.innerHTML = hum + " %";
+
+    if (temp > 30) {
+      tempCard.classList.add("alert");
+    } else {
+      tempCard.classList.remove("alert");
+    }
+
+    const time = new Date().toLocaleTimeString();
+
+    labels.push(time);
+    tempData.push(temp);
+    humData.push(hum);
+
+    if (labels.length > 10) {
+      labels.shift();
+      tempData.shift();
+      humData.shift();
+    }
+
+    chart.update();
+  });
+</script>
+
+<footer>
+  Nom de l’étudiant : <strong>DOSSOU KOKO Mahugnon Dieu-Donné Luc</strong>
+</footer>
+
+</body>
+</html>
